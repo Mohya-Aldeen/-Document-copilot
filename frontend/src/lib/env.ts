@@ -20,6 +20,7 @@ function requiredUrl(name: string, value: unknown): string {
 }
 
 export const env = {
+  appBasePath: import.meta.env.BASE_URL,
   apiBaseUrl: requiredUrl(
     'VITE_API_BASE_URL',
     import.meta.env.VITE_API_BASE_URL,
