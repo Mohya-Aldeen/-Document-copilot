@@ -71,9 +71,11 @@ Only the Supabase anon/publishable key belongs in the browser. Never expose the 
 | `OPENAI_CHAT_MODEL` | Chat model (default: `gpt-4o-mini`) |
 | `OPENAI_EMBEDDING_MODEL` | Embedding model (default: `text-embedding-3-small`) |
 | `OPENAI_EMBEDDING_DIMENSIONS` | Embedding dimensions (default: `1536`) |
+| `ASSISTANT_MAX_TOOL_ROUNDS` | Maximum agent tool rounds (default: `24`) |
+| `INGEST_CHUNK_MAX_TOKENS` | Ingestion chunk token budget (default: `512`) |
 | `ALLOWED_ORIGINS` | Comma-separated allowed frontend origins |
 
-Render supplies `PORT` automatically.
+Render supplies `PORT` automatically. The backend also accepts `PORT` locally (default `8000`).
 
 ## Local setup
 
