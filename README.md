@@ -1,73 +1,120 @@
 # Document Copilot
 
-An internal AI chatbot that lets analysts query a corpus of documents in plain English and get sourced, citable answers.
+An internal AI chatbot that lets analysts query a corpus of SEC filings in plain English and receive sourced, citable answers.
 
-## The client
+## Live Demo
 
-**Driftwood Capital** — fictional independent investment research firm. Their analysts spend half their week reading 10-Ks and 10-Qs before they can produce any original analysis. Document Copilot eats that intake work so they can skip straight to insight.
+- **Frontend:** [Add your Vercel URL]
+- **Backend health:** [Add your Render URL]/health
 
-Full brief: [docs/client-brief.md](docs/client-brief.md)
+> The free Render backend may take approximately 30–60 seconds to wake up after inactivity. The first request can be slow.
+
+## Architecture
+
+```text
+React + Vite (Vercel)
+        |
+        | HTTPS + Supabase Auth JWT
+        v
+FastAPI (Render)
+   |           |
+   v           v
+Supabase     OpenAI
+Postgres     Chat + embeddings
+(pgvector)   (LLM + vectorization)
+```
 
 ## Stack
 
-Full inventory of languages, libraries, and services: [TOOLS.md](TOOLS.md).
+| Layer | Technology |
+|---|---|
+| Frontend | React + TypeScript + Vite |
+| Backend | Python 3.12 + FastAPI + Uvicorn |
+| Database | Supabase PostgreSQL + pgvector |
+| Authentication | Supabase Auth |
+| Retrieval | Hybrid vector + full-text search |
+| LLM | OpenAI |
+| Embeddings | OpenAI `text-embedding-3-small` |
+| Frontend hosting | Vercel |
+| Backend hosting | Render free Web Service |
 
-| Layer              | Choice                                               |
-| ------------------ | ---------------------------------------------------- |
-| Backend            | Python + FastAPI                                     |
-| Frontend           | Vite + React SPA + TypeScript                        |
-| Database           | Supabase Postgres (users, chats, documents, chunks)  |
-| Migrations         | SQLAlchemy models + Alembic                          |
-| Retrieval          | Supabase `pgvector` + Postgres full-text search      |
-| Auth               | Supabase Auth (email only)                           |
-| Hosting            | Railway                                              |
-| LLM + embeddings   | OpenAI                                               |
+## Screenshots
 
-## Repo layout
+Add 3–4 screenshots here:
 
-How each phase works, what it uses, and why it exists: [docs/phases/README.md](docs/phases/README.md).
+1. Sign-in / sign-up screen
+2. Main chat interface
+3. Answer with source citations
+4. Evidence / filing passage panel
 
-```text
-document-copilot/
-├── AGENTS.md           # agent instructions (read first)
-├── README.md           # this file
-├── data/               # local corpus + download script (payloads gitignored)
-├── docs/
-│   ├── client-brief.md # the client one-pager
-│   └── phases/         # one README per build phase
-├── backend/            # FastAPI service
-└── frontend/           # React SPA (Vite)
-```
+## Required environment variables
 
-## Prerequisites
+### Frontend (Vercel)
 
-Install these before setting up `backend/` or `frontend/`:
+| Variable | Purpose |
+|---|---|
+| `VITE_API_BASE_URL` | Public Render backend URL, without trailing slash |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase publishable/anon key only |
 
-| Tool | Version | Used for | Install |
-| ---- | ------- | -------- | ------- |
-| [Python](https://www.python.org/downloads/) | 3.12+ | Backend runtime | OS package manager or python.org |
-| [uv](https://docs.astral.sh/uv/getting-started/installation/) | latest | Backend deps + `data/download.py` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| [Node.js](https://nodejs.org/) | 20+ (LTS) | Frontend toolchain | nodejs.org or `nvm install --lts` |
-| [pnpm](https://pnpm.io/installation) | latest | Frontend package manager | `corepack enable && corepack prepare pnpm@latest --activate` |
+Only the Supabase anon/publishable key belongs in the browser. Never expose the service-role key, database password, or OpenAI key in frontend variables.
 
-You also need accounts/keys for external services once the app is wired up. Start with [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) (account + project), then create an [OpenAI API key](https://platform.openai.com/api-keys) when the LLM layer is wired up.
+### Backend (Render)
 
-## Running locally
+| Variable | Purpose |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anon/publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Backend-only privileged Supabase key |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `OPENAI_API_KEY` | Backend-only OpenAI API key |
+| `OPENAI_CHAT_MODEL` | Chat model (default: `gpt-4o-mini`) |
+| `OPENAI_EMBEDDING_MODEL` | Embedding model (default: `text-embedding-3-small`) |
+| `OPENAI_EMBEDDING_DIMENSIONS` | Embedding dimensions (default: `1536`) |
+| `ALLOWED_ORIGINS` | Comma-separated allowed frontend origins |
 
-To be added during the build. Setup guides:
+Render supplies `PORT` automatically.
 
-- [Supabase](docs/guides/supabase-setup.md) — account, hosted project (dashboard or CLI)
-- [Backend](docs/guides/backend-setup.md)
-- [Frontend](docs/guides/frontend-setup.md)
+## Local setup
 
-## Sample SEC data
+### Backend
 
-Use the standalone downloader to fetch a small local 10-K sample from SEC EDGAR.
-Edit the params at the top of `data/download.py`, especially `USER_AGENT`, then run:
+From `backend/`:
 
 ```bash
-uv run data/download.py
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-By default this downloads the latest 5 10-K filings for AAPL, MSFT, NVDA, AMZN, and GOOGL into year folders under `data/downloads/` and writes a `manifest.json`.
-Downloaded files are gitignored; the `data/` folder itself stays in git for the script and notes.
+Fill the backend environment variables in `.env` before starting the API. Never commit `.env`.
+
+### Frontend
+
+From `frontend/`:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+cp .env.example .env
+pnpm build
+pnpm dev
+```
+
+Set `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` in the frontend environment.
+
+## Deployment
+
+- **Vercel:** Import this repository and set the Root Directory to `frontend`. Framework preset: Vite. Build command: `pnpm build`. Output directory: `dist`.
+- **Render:** Create a Blueprint from the root `render.yaml`, or create a Python Web Service with Root Directory `backend`, build command `pip install -r requirements.txt`, and start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- **Supabase:** Resume the existing project and confirm Auth settings before testing sign-up.
+
+## Free-tier notes
+
+Free hosting tiers have limits and are not guaranteed to remain continuously available. Render free web services can sleep after inactivity; the first request after sleep can be delayed. GitHub Actions scheduled workflows can be delayed or skipped, so keep-alive pings are best-effort, not an uptime guarantee. Supabase free projects can pause under their inactivity policy; a daily lightweight API/database request may help demonstrate activity but does not guarantee the project will never pause. Provider quotas, usage limits, and free-tier policies can change.
+
+## Project background
+
+Document Copilot is a demonstration of an internal research assistant for a fictional investment research firm. It answers questions using a defined corpus of SEC filings, cites supporting passages, and avoids unsupported claims or investment advice.
