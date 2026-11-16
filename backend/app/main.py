@@ -36,7 +36,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     # Vite may pick 5174+ when 5173 is busy — allow any local dev port.
-    allow_origin_regex=r"https?://(localhost|127\\.0\\.0\\.1|\\[::1\\])(:\\d+)?",
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
