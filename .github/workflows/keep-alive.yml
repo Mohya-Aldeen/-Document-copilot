@@ -1,0 +1,46 @@
+name: Free-tier keep-alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-health:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render health endpoint
+        env:
+          BACKEND_HEALTH_URL: ${{ vars.BACKEND_HEALTH_URL }}
+        run: |
+          if [ -z "$BACKEND_HEALTH_URL" ]; then
+            echo "Set the BACKEND_HEALTH_URL repository variable to the full Render /health URL."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 10 --retry-all-errors \
+            "$BACKEND_HEALTH_URL"
+
+  supabase-activity:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 */6 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make a lightweight Supabase REST request
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Set SUPABASE_URL and SUPABASE_ANON_KEY as repository Actions secrets."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 10 --retry-all-errors \
+            "$SUPABASE_URL/rest/v1/source_documents?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"

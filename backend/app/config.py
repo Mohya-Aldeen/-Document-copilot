@@ -2,10 +2,7 @@
 Single source of truth for backend configuration.
 
 Per AGENTS.md: no os.getenv or load_dotenv anywhere else in the app.
-Import `settings` wherever config is needed:
-
-    from app.config import settings
-    settings.OPENAI_API_KEY
+Import settings wherever config is needed.
 """
 
 from pydantic import computed_field
@@ -16,6 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        env_ignore_empty=True,
         case_sensitive=True,
         extra="ignore",
     )
@@ -33,20 +31,14 @@ class Settings(BaseSettings):
     OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     OPENAI_EMBEDDING_DIMENSIONS: int = 1536
-    # A multi-year comparison searches several filings and then reads table
-    # chunks. Eight tool calls aborts that turn before an answer is produced.
     ASSISTANT_MAX_TOOL_ROUNDS: int = 24
-    # Docling HybridChunker token budget (aligned to OpenAI embedding tokenizer).
     INGEST_CHUNK_MAX_TOKENS: int = 512
 
     # --- Server ---
-    # Railway injects PORT. Local `python -m app.main` uses 8000 when it is unset.
+    # Hosting platforms inject PORT. Local execution uses 8000 if unset.
     PORT: int = 8000
-    # Comma-separated in .env (see .env.example). Stored as str so pydantic-settings
-    # does not try to JSON-decode the value before our split runs.
-    # Production must include the public frontend origin, for example
-    # https://your-frontend.up.railway.app
-    ALLOWED_ORIGINS: str = "http://localhost:5173"
+    # Comma-separated browser origins. Include the deployed frontend origin.
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
     @computed_field
     @property
@@ -54,6 +46,4 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
 
 
-# Instantiated once at import time — missing/invalid required vars raise
-# immediately on startup rather than failing later at first use.
 settings = Settings()

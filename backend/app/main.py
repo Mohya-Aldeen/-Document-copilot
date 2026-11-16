@@ -4,8 +4,7 @@ FastAPI application entrypoint.
 Run locally with:
     uv run python -m uvicorn app.main:app --reload
 
-Railway starts this module so it binds the platform PORT:
-    uv run python -m app.main
+The hosting platform injects PORT; the app binds to 0.0.0.0.
 """
 
 import time
@@ -64,7 +63,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    """Liveness check — used by Railway and local dev."""
+    """Lightweight liveness check for hosting health checks."""
     return {"status": "ok"}
 
 
