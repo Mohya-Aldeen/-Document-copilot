@@ -3,7 +3,7 @@ name: Free-tier keep-alive
 on:
   schedule:
     - cron: "*/10 * * * *"
-    - cron: "15 3 * * *"
+    - cron: "15 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
             "$BACKEND_HEALTH_URL"
 
   supabase-activity:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 3 * * *'
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 */6 * * *'
     runs-on: ubuntu-latest
     steps:
       - name: Make a lightweight Supabase REST request
