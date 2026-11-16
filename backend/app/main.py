@@ -4,8 +4,7 @@ FastAPI application entrypoint.
 Run locally with:
     uv run python -m uvicorn app.main:app --reload
 
-Railway starts this module so it binds the platform PORT:
-    uv run python -m app.main
+The hosting platform injects PORT; the app binds to 0.0.0.0.
 """
 
 import time
@@ -37,7 +36,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     # Vite may pick 5174+ when 5173 is busy — allow any local dev port.
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?",
+    allow_origin_regex=r"https?://(localhost|127\\.0\\.0\\.1|\\[::1\\])(:\\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,7 +63,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    """Liveness check — used by Railway and local dev."""
+    """Lightweight liveness check for hosting health checks."""
     return {"status": "ok"}
 
 
