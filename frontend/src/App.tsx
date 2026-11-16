@@ -2,13 +2,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { RequireAuth } from '@/components/auth/RequireAuth'
+import { env } from '@/lib/env'
 import { ChatPage } from '@/pages/ChatPage'
 import { SignInPage } from '@/pages/SignInPage'
 import { SignUpPage } from '@/pages/SignUpPage'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={env.appBasePath}>
       <AuthProvider>
         <Routes>
           <Route path="/sign-in" element={<SignInPage />} />
